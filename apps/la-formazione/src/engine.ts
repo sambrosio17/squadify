@@ -1,5 +1,5 @@
 import { esc, type Endpoints } from '@sportify/core';
-import { cardStats, discography, PERIOD_LBL, PERIODS, type Model, type Period } from './data';
+import { cardStats, discography, PERIOD_FULL, PERIOD_LBL, PERIODS, type Model, type Period } from './data';
 import { sfx } from './sfx';
 
 type Modulo = '433' | '442' | '352';
@@ -71,6 +71,7 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
   }
 
   function layout() {
+    $('periodChip').textContent = PERIOD_FULL[state.period];
     const lineup = m.lineups[state.period];
     const pos = MODULI[state.modulo].pos;
     for (const [id, el] of els) if (!lineup.includes(id)) el.classList.add('gone');
@@ -282,7 +283,7 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
     $('ccGen').innerHTML = `<dt>Esordio</dt><dd>${disc.debut ?? '—'}</dd>`
       + `<dt>Brano simbolo</dt><dd>${song ? `«${esc(song)}»` : '—'}</dd>`
       + `<dt>In squadra</dt><dd>${present} ${present === 1 ? 'periodo' : 'periodi'} su 3</dd>`;
-    $('ccCap').textContent = i === 0 ? `Il capitano di ${team()}` : `In campo per ${team()}`;
+    $('ccCap').innerHTML = `${esc(i === 0 ? `Il capitano di ${team()}` : `In campo per ${team()}`)}<small>Ascolti: ${PERIOD_FULL[state.period].toLowerCase()}</small>`;
     $('ccBeams').className = `cc-beams ${tier}`;
     if (animate && !reduce) void playReveal(run, ovr, tier);
     else showParts();

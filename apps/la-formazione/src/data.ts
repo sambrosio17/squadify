@@ -3,6 +3,8 @@ import { pickImage, releaseYear, type Artist, type Endpoints, type SimplifiedArt
 export type Period = 'short' | 'medium' | 'long';
 export const PERIODS: Period[] = ['short', 'medium', 'long'];
 export const PERIOD_LBL: Record<Period, string> = { short: '4 settimane', medium: '6 mesi', long: '1 anno' };
+/** Come si legge sulla card condivisa: il periodo di ascolti su cui è calcolata. */
+export const PERIOD_FULL: Record<Period, string> = { short: 'Ultime 4 settimane', medium: 'Ultimi 6 mesi', long: 'Ultimo anno' };
 const RANGE = { short: 'short_term', medium: 'medium_term', long: 'long_term' } as const;
 
 export interface Player {

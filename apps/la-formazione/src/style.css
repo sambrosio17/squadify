@@ -41,7 +41,14 @@ body { background: var(--night); color: var(--chalk); font-family: var(--f-body)
 .bug .score b.bump { transform: scale(1.6); color: var(--led-on); }
 .bug .opp { background: #2b3a33; color: var(--chalk); padding: 0 9px; display: flex; align-items: center; font-size: 13px; }
 .bug .clock { background: #0b1511; color: var(--led-on); padding: 0 8px; display: flex; align-items: center; font-size: 15px; border-radius: 0 6px 6px 0; font-variant-numeric: tabular-nums; }
-.ticker { position: absolute; left: 14px; right: 14px; top: 54px; height: 20px; font-size: 12px; color: var(--flood); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .9; }
+.ticker { position: absolute; left: 14px; right: 128px; top: 54px; height: 20px; font-size: 12px; color: var(--flood); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .9; }
+.period-chip { position: absolute; right: 14px; top: 54px; height: 18px; display: flex; align-items: center; padding: 0 7px; border-radius: 4px; background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); font-family: var(--f-display); font-weight: 700; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--chalk); white-space: nowrap; }
+.card:has(.capcard:not([hidden])) .period-chip { display: none; }
+.card[data-style="figurine"] .period-chip { background: #1d3f8a; color: #fffaf0; box-shadow: none; }
+.card[data-style="lavagna"] .period-chip { background: none; box-shadow: none; font-family: "Caveat", cursive; font-size: 15px; text-transform: none; letter-spacing: 0; border-bottom: 2px solid rgba(242,241,234,.5); border-radius: 0; top: 58px; right: 20px; }
+.card[data-style="lavagna"] .ticker { right: 140px; }
+.card[data-style="arcade"] .period-chip { font-size: 6px; border-radius: 0; background: #120f3a; box-shadow: inset 0 0 0 2px #fff; }
+.cc-caption small { display: block; margin-top: 4px; font-size: 10px; letter-spacing: .14em; opacity: .7; }
 .ticker span { display: inline-block; animation: tick-in .35s ease-out; }
 
 /* Campo */
@@ -65,16 +72,16 @@ body { background: var(--night); color: var(--chalk); font-family: var(--f-body)
 
 .pl { position: absolute; width: 74px; margin-left: -37px; margin-top: -26px; text-align: center; transition: left .7s cubic-bezier(.5,0,.2,1), top .7s cubic-bezier(.5,0,.2,1), opacity .4s, transform .4s; cursor: pointer; z-index: 2; background: none; border: 0; padding: 0; color: inherit; font: inherit; }
 .pl:focus-visible { outline: 2px solid var(--led-on); outline-offset: 2px; border-radius: 8px; }
-.pl .disc { position: relative; width: 42px; height: 42px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 15px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); box-shadow: 0 0 0 2px var(--chalk), 0 6px 10px rgba(0,0,0,.45); animation: idle 3.2s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.pl .disc { position: relative; width: 42px; height: 42px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 15px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); border: 2px solid var(--chalk); box-shadow: 0 6px 10px rgba(0,0,0,.45); animation: idle 3.2s ease-in-out infinite; animation-delay: var(--d, 0s); }
 .pl .num { position: absolute; right: -6px; bottom: -4px; background: var(--night); color: var(--led-on); font-family: var(--f-led); font-weight: 900; font-size: 11px; line-height: 1; padding: 2px 3px; border-radius: 3px; }
 .pl.cap .disc::after { content: "C"; position: absolute; left: -6px; top: -4px; width: 15px; height: 15px; border-radius: 50%; background: var(--led-on); color: var(--night); font-size: 10px; display: grid; place-items: center; text-shadow: none; }
 .pl .name { display: inline-block; margin-top: 5px; font-family: var(--f-display); font-weight: 700; font-size: 11.5px; letter-spacing: .02em; text-transform: uppercase; background: rgba(7,13,11,.72); padding: 1px 5px; border-radius: 3px; white-space: nowrap; max-width: 80px; overflow: hidden; text-overflow: ellipsis; transition: background .2s, color .2s; }
 .pl.touch .disc { animation: touch .45s ease-out; }
 .pl.touch .name { background: var(--flood); color: var(--night); }
-.pl.selected .disc { box-shadow: 0 0 0 3px var(--led-on), 0 0 18px rgba(255,178,26,.6); }
-.pl.entering .disc { box-shadow: 0 0 0 3px var(--led-in), 0 0 22px rgba(61,255,138,.7); }
+.pl.selected .disc { border: 3px solid var(--led-on); box-shadow: 0 0 18px rgba(255,178,26,.6); }
+.pl.entering .disc { border: 3px solid var(--led-in); box-shadow: 0 0 22px rgba(61,255,138,.7); }
 .pl.gone { opacity: 0; transform: scale(.4); pointer-events: none; }
-.pl-ghost { position: absolute; z-index: 1; width: 42px; height: 42px; margin: -26px 0 0 -21px; border-radius: 50%; box-shadow: 0 0 0 3px var(--led-out); display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; color: #fff; opacity: .9; }
+.pl-ghost { position: absolute; z-index: 1; width: 42px; height: 42px; margin: -26px 0 0 -21px; border-radius: 50%; border: 3px solid var(--led-out); display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; color: #fff; opacity: .9; }
 
 .ball { position: absolute; left: 0; top: 0; width: 13px; height: 13px; margin: -6px 0 0 -6px; border-radius: 50%; z-index: 3; pointer-events: none;
   background: radial-gradient(circle at 35% 30%, #fff 0 45%, #cfd6d2 70%, #8a948f 100%);
@@ -144,7 +151,7 @@ input[type="text"] { background: var(--panel); border: 1px solid var(--panel-lin
 .card[data-style="figurine"] .bug .opp { background: #c0261c; }
 .card[data-style="figurine"] .pitch { background: repeating-linear-gradient(90deg, #5c9a46 0 30px, #6aa851 30px 60px); box-shadow: inset 0 0 0 3px #fffaf0, 0 4px 0 #b8a57c; border-radius: 2px; }
 .card[data-style="figurine"] .pitch .line { border-color: rgba(255,250,240,.8); }
-.card[data-style="figurine"] .pl .disc { border-radius: 4px; width: 40px; height: 48px; box-shadow: 0 0 0 3px #fffaf0, 0 3px 5px rgba(0,0,0,.35); animation: none; transform: rotate(var(--rot, -3deg)); }
+.card[data-style="figurine"] .pl .disc { border-radius: 4px; width: 40px; height: 48px; border: 3px solid #fffaf0; box-shadow: 0 3px 5px rgba(0,0,0,.35); animation: none; transform: rotate(var(--rot, -3deg)); }
 .card[data-style="figurine"] .pl .name { background: #c0261c; color: #fffaf0; border-radius: 0; font-family: "Alfa Slab One", var(--f-display); font-weight: 400; font-size: 10px; }
 .card[data-style="figurine"] .pl .num { background: #fffaf0; color: #1d1a14; font-family: "Alfa Slab One", var(--f-display); }
 .card[data-style="figurine"] .trail { stroke: #fffaf0; stroke-dasharray: 2 6; stroke-width: 3; }
@@ -201,7 +208,7 @@ input[type="text"] { background: var(--panel); border: 1px solid var(--panel-lin
 .card[data-style="arcade"] .pitch { border-radius: 0; background: repeating-conic-gradient(#2fa84f 0 25%, #279444 0 50%) 0 0 / 32px 32px; box-shadow: inset 0 0 0 4px #fff; }
 .card[data-style="arcade"] .pitch .line { border-width: 4px; border-color: rgba(255,255,255,.8); }
 .card[data-style="arcade"] .pitch .circle { border-radius: 0; width: 64px; height: 64px; }
-.card[data-style="arcade"] .pl .disc { border-radius: 0; width: 34px; height: 34px; font-size: 9px; box-shadow: 0 0 0 3px #fff, 4px 4px 0 3px rgba(0,0,0,.5); animation-timing-function: steps(2); }
+.card[data-style="arcade"] .pl .disc { border-radius: 0; width: 34px; height: 34px; font-size: 9px; border: 3px solid #fff; box-shadow: 5px 5px 0 rgba(0,0,0,.5); animation-timing-function: steps(2); }
 .card[data-style="arcade"] .pl.cap .disc::after { border-radius: 0; font-size: 7px; }
 .card[data-style="arcade"] .pl .num { font-size: 7px; border-radius: 0; }
 .card[data-style="arcade"] .pl .name { font-size: 6.5px; border-radius: 0; padding: 3px 4px; background: #120f3a; margin-top: 7px; }
@@ -372,3 +379,10 @@ select { background: var(--panel); border: 1px solid var(--panel-line); color: v
 }
 .cc-photo.nophoto { -webkit-mask-image: none; mask-image: none; }
 .howto li b { color: var(--led-on); font-family: var(--f-display); letter-spacing: .04em; margin-right: 4px; }
+
+/* Barra CTA della card condivisa, nei colori di ogni stile. */
+.card { --cta-bg: #050605; --cta-fg: var(--chalk); --cta-accent: var(--led-on); }
+.card[data-style="figurine"] { --cta-bg: #1d3f8a; --cta-fg: #fffaf0; --cta-accent: #c0261c; }
+.card[data-style="lavagna"] { --cta-bg: #1c2622; --cta-fg: #f2f1ea; --cta-accent: #6b4a2b; }
+.card[data-style="arcade"] { --cta-bg: #120f3a; --cta-fg: #fff; --cta-accent: #ff3d7f; }
+.card[data-style="arcade"] .ticker { right: 150px; }

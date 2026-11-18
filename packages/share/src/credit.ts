@@ -15,10 +15,16 @@ const shortUrl = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\
 export const creditLink = (cls: string) =>
   `<a class="${cls}" href="${CREDIT.url}" target="_blank" rel="noopener">made by <b>${CREDIT.handle}</b></a>`;
 
-/** Fascia in fondo a ogni card: invito a provare l'app + firma. */
+/**
+ * Barra in fondo a ogni card: a sinistra l'invito a provare l'app con l'indirizzo,
+ * a destra la firma. Colori personalizzabili con --cta-bg, --cta-fg e --cta-accent.
+ */
 export const ctaStrip = (cta: string) => `<div class="share-cta">
-    <span class="share-cta-line"><b>${cta}</b> → ${SHARE_URL ? shortUrl(SHARE_URL) : 'link in bio'}</span>
-    ${creditLink('share-cta-credit')}
+    <div class="share-cta-main">
+      <span class="share-cta-go" aria-hidden="true">→</span>
+      <span class="share-cta-text"><b>${cta}</b><small>${SHARE_URL ? shortUrl(SHARE_URL) : 'link in bio'}</small></span>
+    </div>
+    <a class="share-cta-credit" href="${CREDIT.url}" target="_blank" rel="noopener"><small>made by</small><b>${CREDIT.handle}</b></a>
   </div>`;
 
 /** Aggiunge invito, firma e link al testo che accompagna la condivisione. */

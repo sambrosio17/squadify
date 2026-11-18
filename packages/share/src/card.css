@@ -9,31 +9,39 @@
 }
 /* Mentre si genera il PNG: niente animazioni né transizioni. */
 .story-card.exporting, .story-card.exporting * { animation: none !important; transition: none !important; }
-/* Fascia in fondo a ogni card: invito + firma. Fondo scuro così si legge su qualunque stile. */
+/* Barra in fondo a ogni card: invito + firma (finisce anche nel PNG). */
 .story-card .share-cta {
   position: absolute;
-  left: 50%;
-  bottom: 6px;
-  translate: -50% 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 50;
+  height: 38px;
+  padding: 0 14px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 4px 12px 5px;
-  border-radius: 10px;
-  background: rgba(10, 12, 11, .72);
-  color: #fff;
-  font-family: system-ui, sans-serif;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--cta-bg, rgba(8, 10, 9, .86));
+  color: var(--cta-fg, #fff);
+  border-top: 2px solid var(--cta-accent, #1db954);
   white-space: nowrap;
-  line-height: 1.15;
+  line-height: 1.1;
+  text-align: left;
 }
-.story-card .share-cta-line { font-size: 10.5px; letter-spacing: .02em; }
-.story-card .share-cta-line b { font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
-.story-card .share-cta-credit { font-size: 8.5px; color: rgba(255, 255, 255, .75); text-decoration: none; letter-spacing: .03em; }
-.story-card .share-cta-credit b { color: #fff; font-weight: 700; }
-/* Gli stili delle app (es. "arcade") cambiano il font di tutto: la fascia resta sempre uguale. */
-#card .share-cta, #card .share-cta * { font-family: system-ui, sans-serif !important; font-style: normal !important; }
-#card .share-cta-line { letter-spacing: .02em !important; }
-#card .share-cta-line b { letter-spacing: .06em !important; }
-#card .share-cta-credit, #card .share-cta-credit b { letter-spacing: .03em !important; }
+.story-card .share-cta-main { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.story-card .share-cta-go {
+  flex: none; width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--cta-accent, #1db954); color: var(--cta-bg, #0a0c0b);
+  font-size: 12px; font-weight: 900;
+}
+.story-card .share-cta-text { display: flex; flex-direction: column; min-width: 0; }
+.story-card .share-cta-text b { font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.story-card .share-cta-text small, .story-card .share-cta-credit small { font-size: 8.5px; opacity: .72; }
+.story-card .share-cta-text small { overflow: hidden; text-overflow: ellipsis; }
+.story-card .share-cta-credit { display: flex; flex-direction: column; align-items: flex-end; color: inherit; text-decoration: none; }
+.story-card .share-cta-credit b { font-size: 9.5px; font-weight: 700; }
+/* Gli stili delle app (es. "arcade") cambiano il font di tutto: la barra resta sempre uguale. */
+#card .share-cta, #card .share-cta * { font-family: system-ui, sans-serif !important; font-style: normal !important; letter-spacing: .02em !important; }
+#card .share-cta-text b { letter-spacing: .07em !important; }

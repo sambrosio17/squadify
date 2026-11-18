@@ -7,6 +7,7 @@ export const CARD_HTML = `
       <span class="opp">Noia</span>
       <span class="clock" id="clock">00'</span>
     </div>
+    <div class="period-chip" id="periodChip"></div>
     <div class="ticker" id="ticker"><span>Squadre in campo, si parte.</span></div>
     <div class="pitch" id="pitch">
       <div class="line half"></div><div class="line circle"></div>
