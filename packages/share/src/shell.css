@@ -18,3 +18,34 @@ body { background: var(--bg); color: var(--ink); font-family: system-ui, sans-se
 .made-by-link { color: inherit; text-decoration: none; }
 .made-by-link b { color: var(--ink); }
 .made-by-link:hover b { text-decoration: underline; }
+
+/* Pannello di condivisione (sheet.ts): dal basso su telefono, finestra centrata su schermi larghi.
+   Colori dalle variabili dell'app: --sheet-bg, --sheet-line, --sheet-accent, --sheet-accent-ink. */
+.share-sheet { position: fixed; inset: 0; z-index: 1000; }
+.share-sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.6); opacity: 0; transition: opacity .25s; }
+.share-sheet-panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 92dvh; overflow-y: auto; box-sizing: border-box; padding: 10px 20px calc(20px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; background: var(--sheet-bg, var(--bg)); color: var(--ink); box-shadow: 0 -10px 40px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 16px; transform: translateY(105%); transition: transform .3s cubic-bezier(.3,.7,.2,1); }
+.share-sheet.open .share-sheet-bg { opacity: 1; }
+.share-sheet.open .share-sheet-panel { transform: none; }
+.share-sheet-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--sheet-line, #8886); align-self: center; }
+.share-sheet header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.share-sheet h2 { margin: 0; font-size: 22px; }
+.share-sheet svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.share-sheet-x { width: 44px; height: 44px; border: 0; background: none; color: inherit; display: grid; place-items: center; cursor: pointer; }
+.share-sheet-body { display: flex; gap: 16px; align-items: flex-start; }
+.share-sheet-body img { width: 42%; max-width: 200px; height: auto; flex: none; border-radius: 12px; box-shadow: 0 0 0 1px var(--sheet-line, #8884), 0 10px 24px rgba(0,0,0,.4); }
+.share-sheet-info { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.share-sheet-k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.share-sheet-info p { margin: 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--sheet-line, #8884); font-size: 14px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
+.share-sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+.share-sheet-actions .btn { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; }
+.share-sheet-main { min-height: 54px !important; font-size: 17px; background: var(--sheet-accent, var(--accent)); color: var(--sheet-accent-ink, #fff); }
+.share-sheet-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 721px) {
+  .share-sheet-panel { left: 50%; right: auto; bottom: 50%; width: 560px; border-radius: 22px; transform: translate(-50%, 60%); opacity: 0; transition: transform .3s, opacity .2s; }
+  .share-sheet.open .share-sheet-panel { transform: translate(-50%, 50%); opacity: 1; }
+  .share-sheet-handle { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .share-sheet-panel, .share-sheet-bg { transition: none; } }
+
+/* Accesso con anteprima (AppDefinition.hero). */
+.shell.login .btn#login { min-height: 54px; padding: 0 28px; font-size: 17px; }

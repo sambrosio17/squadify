@@ -1,5 +1,6 @@
 import { createSpotify, SpotifyError, type Endpoints, esc } from '@sportify/core';
-import { shareCard } from './card';
+import { renderCard } from './card';
+import { openShareSheet } from './sheet';
 import { creditLink, ctaStrip, withCredit } from './credit';
 import './shell.css';
 
@@ -25,6 +26,8 @@ export interface AppDefinition {
   tagline: string;
   /** Invito stampato in fondo alla card condivisa, es. "Schiera la tua squadra". */
   cta?: string;
+  /** HTML mostrato sopra il pulsante di accesso (anteprima, titolo). */
+  hero?: string;
   scopes: string[];
   build: (api: Endpoints) => Promise<CardResult>;
 }
@@ -43,7 +46,8 @@ export async function startApp(def: AppDefinition) {
   try {
     const spotify = await createSpotify({ scopes: def.scopes });
     if (!spotify.loggedIn) {
-      root.innerHTML = `${header}<button class="btn" id="login">Accedi con Spotify</button>${footer}`;
+      root.classList.add('login');
+      root.innerHTML = `${header}${def.hero ?? ''}<button class="btn" id="login">Accedi con Spotify</button>${footer}`;
       root.querySelector('#login')!.addEventListener('click', () => spotify.login());
       return;
     }
@@ -65,7 +69,12 @@ export async function startApp(def: AppDefinition) {
       el.classList.add('exporting');
       try {
         const text = typeof card.shareText === 'function' ? card.shareText() : card.shareText;
-        await shareCard(el, { filename: card.getFilename?.() ?? card.filename, title: def.title, text: withCredit(cta, text) });
+        const blob = await renderCard(el);
+        openShareSheet({ blob, filename: card.getFilename?.() ?? card.filename, title: def.title, text: withCredit(cta, text) });
+      } catch (e) {
+        console.error(e);
+        share.textContent = 'Errore, riprova';
+        setTimeout(() => { share.textContent = 'Condividi'; }, 2500);
       } finally {
         el.classList.remove('exporting');
         share.disabled = false;

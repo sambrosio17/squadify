@@ -9,6 +9,8 @@ export const CREDIT = {
  * Se manca, la CTA rimanda al link nella bio del profilo Instagram.
  */
 const SHARE_URL: string | undefined = import.meta.env.VITE_SHARE_URL || undefined;
+/** Indirizzo da copiare con "Copia link": quello pubblico, se c'è, altrimenti la pagina aperta. */
+export const shareLink = () => SHARE_URL ?? location.origin + location.pathname;
 const shortUrl = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 
 /** Link "made by" per la pagina e per la card (nel PNG resta il nome, che su Instagram si tagga). */

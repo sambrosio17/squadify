@@ -61,6 +61,7 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
   function makePlayer(id: string) {
     const b = document.createElement('button');
     b.className = 'pl gone';
+    b.dataset.id = id;
     b.type = 'button';
     const p = m.players.get(id)!;
     b.innerHTML = `<div class="disc${p.thumb ? ' has-photo' : ''}" style='${discStyle(id)};--d:${(hue(id) % 30) / 10}s;--rot:${(hue(id) % 9) - 4}deg'>${p.thumb ? '' : esc(initials(p.name))}<span class="num"></span></div><span class="name">${esc(p.name)}</span>`;

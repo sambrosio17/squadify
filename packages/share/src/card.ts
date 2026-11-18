@@ -31,12 +31,17 @@ export async function shareCard(el: HTMLElement, opts: { filename: string; title
       if ((e as DOMException).name === 'AbortError') return 'cancelled' as const;
     }
   }
+  downloadBlob(blob, file.name);
+  return 'downloaded' as const;
+}
+
+/** Scarica un file generato nel browser. */
+export function downloadBlob(blob: Blob, name: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = file.name;
+  a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  return 'downloaded' as const;
 }
 
 /** JPEG base64 (senza prefisso) sotto i 256 KB, per usare la card come copertina di una playlist. */

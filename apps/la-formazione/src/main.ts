@@ -2,6 +2,7 @@ import './fonts';
 import { startApp } from '@sportify/share';
 import { loadModel } from './data';
 import { mountFormazione } from './engine';
+import { mountMobile } from './mobile';
 import { SCOPES } from './scopes';
 import { CARD_HTML, CONTROLS_HTML } from './templates';
 import './style.css';
@@ -10,6 +11,11 @@ startApp({
   title: 'La Formazione',
   tagline: 'I tuoi 11 artisti in campo, con sostituzioni e carta del capitano.',
   cta: 'Schiera la tua squadra',
+  hero: `<div class="hero">
+    <div class="hero-cards" aria-hidden="true"><span class="h1c"></span><span class="h2c"></span><span class="h3c"></span></div>
+    <h2>I tuoi 11 artisti<br><em>scendono in campo</em></h2>
+    <p>Partita, sostituzioni tra i periodi e la carta del tuo capitano, pronte da mettere nelle storie.</p>
+  </div>`,
   scopes: SCOPES,
   async build(api) {
     const [model, me] = await Promise.all([loadModel(api), api.me()]);
@@ -22,7 +28,10 @@ startApp({
       shareText: () => hooks?.shareText() ?? 'Ecco la mia formazione ⚽',
       html: CARD_HTML,
       controls: CONTROLS_HTML,
-      mount: (card, root) => { hooks = mountFormazione(card, root, model, api, teamDefault); },
+      mount: (card, root) => {
+        hooks = mountFormazione(card, root, model, api, teamDefault);
+        mountMobile(card, root);
+      },
     };
   },
 });
