@@ -1,0 +1,22 @@
+{
+  "name": "la-formazione",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p . && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@fontsource/alfa-slab-one": "^5.3.0",
+    "@fontsource/barlow": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/doto": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.3.0",
+    "@sportify/core": "workspace:*",
+    "@sportify/share": "workspace:*"
+  }
+}

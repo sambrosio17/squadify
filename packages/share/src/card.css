@@ -1,0 +1,39 @@
+/* Base comune per le card condivisibili: 360×640 CSS px = 1080×1920 esportati. */
+.story-card {
+  width: 360px;
+  height: 640px;
+  border-radius: 22px;
+  overflow: hidden;
+  position: relative;
+  flex: none;
+}
+/* Mentre si genera il PNG: niente animazioni né transizioni. */
+.story-card.exporting, .story-card.exporting * { animation: none !important; transition: none !important; }
+/* Fascia in fondo a ogni card: invito + firma. Fondo scuro così si legge su qualunque stile. */
+.story-card .share-cta {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  translate: -50% 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 12px 5px;
+  border-radius: 10px;
+  background: rgba(10, 12, 11, .72);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+.story-card .share-cta-line { font-size: 10.5px; letter-spacing: .02em; }
+.story-card .share-cta-line b { font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.story-card .share-cta-credit { font-size: 8.5px; color: rgba(255, 255, 255, .75); text-decoration: none; letter-spacing: .03em; }
+.story-card .share-cta-credit b { color: #fff; font-weight: 700; }
+/* Gli stili delle app (es. "arcade") cambiano il font di tutto: la fascia resta sempre uguale. */
+#card .share-cta, #card .share-cta * { font-family: system-ui, sans-serif !important; font-style: normal !important; }
+#card .share-cta-line { letter-spacing: .02em !important; }
+#card .share-cta-line b { letter-spacing: .06em !important; }
+#card .share-cta-credit, #card .share-cta-credit b { letter-spacing: .03em !important; }

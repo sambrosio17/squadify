@@ -1,0 +1,20 @@
+:root { --bg: #f2f0eb; --ink: #1b1b1b; --muted: #666; --accent: #1db954; }
+@media (prefers-color-scheme: dark) { :root { --bg: #141414; --ink: #eee; --muted: #999; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+.shell { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 32px 16px; }
+.shell h1 { font-size: 28px; }
+.shell .tagline { color: var(--muted); text-align: center; margin-top: -10px; }
+.shell .status { color: var(--muted); }
+.shell .status.error { color: #c0262d; max-width: 360px; text-align: center; }
+.actions { display: flex; gap: 10px; }
+.btn { border: 0; border-radius: 999px; padding: 12px 22px; font-weight: 700; font-size: 15px; background: var(--accent); color: #fff; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--muted); }
+.stage { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; width: 100%; max-width: 980px; }
+.stage-card { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.stage-controls { flex: 1 1 300px; max-width: 440px; min-width: 0; }
+.btn:disabled { opacity: .5; cursor: default; }
+.made-by { margin-top: auto; padding-top: 12px; font-size: 13px; color: var(--muted); }
+.made-by-link { color: inherit; text-decoration: none; }
+.made-by-link b { color: var(--ink); }
+.made-by-link:hover b { text-decoration: underline; }

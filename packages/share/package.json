@@ -1,0 +1,16 @@
+{
+  "name": "@sportify/share",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "html-to-image": "^1.11.13",
+    "@sportify/core": "workspace:*"
+  }
+}
