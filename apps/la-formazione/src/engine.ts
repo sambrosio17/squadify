@@ -1,25 +1,14 @@
-import { esc, type Endpoints } from '@sportify/core';
-import { cardStats, discography, PERIOD_FULL, PERIOD_LBL, PERIODS, type Model, type Period } from './data';
+import { esc } from '@sportify/core';
+import type { Period } from './data';
+import { grad, hue, initials, MODULI, ROLE_NAMES, ROLE_SHORT, roleOf as roleIn, type Modulo } from './formation';
 import { sfx } from './sfx';
+import type { Squad } from './squad';
 
-type Modulo = '433' | '442' | '352';
 type View = 'partita' | 'carta';
 
-const NEXT: Record<Period, Period | null> = { short: 'medium', medium: 'long', long: null };
-// Posizioni in % del campo, in ordine: attacco (il primo è il centravanti), centrocampo, difesa, portiere.
-const MODULI: Record<Modulo, { roles: number[]; pos: [number, number][] }> = {
-  '433': { roles: [3, 3, 4, 1], pos: [[50, 17], [20, 24], [80, 24], [50, 46], [24, 51], [76, 51], [38, 75], [62, 75], [13, 71], [87, 71], [50, 88]] },
-  '442': { roles: [2, 4, 4, 1], pos: [[38, 19], [62, 19], [37, 48], [63, 48], [11, 45], [89, 45], [38, 75], [62, 75], [13, 71], [87, 71], [50, 88]] },
-  '352': { roles: [2, 5, 3, 1], pos: [[38, 19], [62, 19], [50, 40], [30, 52], [70, 52], [9, 46], [91, 46], [26, 75], [50, 77], [74, 75], [50, 88]] },
-};
-const ROLE_NAMES = ['Attaccante', 'Centrocampista', 'Difensore', 'Portiere'];
-const ROLE_SHORT = ['ATT', 'CEN', 'DIF', 'POR'];
 const PASS_VERBS = ['apre per', 'serve', 'scarica su', 'imbuca per', 'cambia gioco verso', 'appoggia a', 'lancia lungo per'];
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-function hue(s: string) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
-const grad = (s: string) => `linear-gradient(140deg, hsl(${hue(s)} 70% 55%), hsl(${(hue(s) + 50) % 360} 65% 30%))`;
-const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 const backdrop = (s: string) => {
   const h = hue(s);
   return `radial-gradient(60% 40% at 30% 25%, hsl(${h} 80% 60% / .55), transparent 70%),
@@ -28,14 +17,22 @@ const backdrop = (s: string) => {
 };
 
 /** Aggancia animazioni, suoni e controlli alla card già inserita nella pagina. */
-export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, api: Endpoints, teamDefault: string) {
+export interface EngineOpts {
+  teamDefault: string;
+  modulo?: Modulo;
+  /** Il modulo non si cambia dalla regia (squadra fatta a mano: si cambia dal mercato). */
+  lockModulo?: boolean;
+}
+
+export function mountFormazione(card: HTMLElement, root: HTMLElement, sq: Squad, opts: EngineOpts) {
+  const { teamDefault } = opts;
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>('#' + id)!;
   const pitch = $('pitch'), ball = $('ball'), trails = root.querySelector<SVGSVGElement>('#trails')!;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const name = (id: string) => m.players.get(id)?.name ?? '—';
+  const name = (id: string) => sq.players.get(id)?.name ?? '—';
 
   const state = {
-    period: 'short' as Period, modulo: '433' as Modulo, view: 'partita' as View,
+    period: 'short' as Period, modulo: (opts.modulo ?? '433') as Modulo, view: 'partita' as View,
     home: 0, away: 0, minute: 0, selected: '' as string, ccId: '' as string, subIdx: 0, busy: false,
   };
   const els = new Map<string, HTMLButtonElement>();
@@ -46,15 +43,19 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
   $<HTMLInputElement>('teamName').value = teamDefault;
   const team = () => $('teamLbl').textContent ?? '';
 
-  function roleOf(i: number) {
-    const r = MODULI[state.modulo].roles; let acc = 0;
-    for (let k = 0; k < r.length; k++) { acc += r[k]; if (i < acc) return k; }
-    return 3;
-  }
+  const roleOf = (i: number) => roleIn(state.modulo, i);
+  const lineupNow = () => sq.lineup(state.period);
+  const captain = () => sq.captain(state.period);
+  $('sAwayName').textContent = sq.opponent;
+  $('regiaNote').textContent = sq.note;
+  $('ccHowNote').innerHTML = sq.howNote;
+  if (!sq.periods) $('grpPeriodo').hidden = true;
+  if (opts.lockModulo) $('grpModulo').hidden = true;
+  for (const b of root.querySelectorAll<HTMLButtonElement>('#segModulo button')) b.setAttribute('aria-pressed', String(b.dataset.v === state.modulo));
 
   /** Dischetto: la foto dell'artista se c'è, altrimenti un colore stabile con le iniziali. */
   function discStyle(id: string) {
-    const p = m.players.get(id);
+    const p = sq.players.get(id);
     return p?.thumb ? `background:center/cover url("${p.thumb}")` : `background:${grad(id)}`;
   }
 
@@ -63,7 +64,7 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
     b.className = 'pl gone';
     b.dataset.id = id;
     b.type = 'button';
-    const p = m.players.get(id)!;
+    const p = sq.players.get(id)!;
     b.innerHTML = `<div class="disc${p.thumb ? ' has-photo' : ''}" style='${discStyle(id)};--d:${(hue(id) % 30) / 10}s;--rot:${(hue(id) % 9) - 4}deg'>${p.thumb ? '' : esc(initials(p.name))}<span class="num"></span></div><span class="name">${esc(p.name)}</span>`;
     b.addEventListener('click', () => select(id));
     pitch.appendChild(b);
@@ -72,66 +73,54 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
   }
 
   function layout() {
-    $('periodChip').textContent = PERIOD_FULL[state.period];
-    const lineup = m.lineups[state.period];
+    $('periodChip').textContent = sq.chip(state.period);
+    const lineup = lineupNow();
     const pos = MODULI[state.modulo].pos;
     for (const [id, el] of els) if (!lineup.includes(id)) el.classList.add('gone');
     lineup.forEach((id, i) => {
       const el = els.get(id) ?? makePlayer(id);
       el.style.left = pos[i][0] + '%';
       el.style.top = pos[i][1] + '%';
-      el.querySelector('.num')!.textContent = String(i + 1);
-      el.classList.toggle('cap', i === 0);
-      el.setAttribute('aria-label', `${name(id)}, numero ${i + 1}, ${ROLE_NAMES[roleOf(i)]}`);
+      const n = sq.shirt(id, state.period);
+      el.querySelector('.num')!.textContent = String(n);
+      el.classList.toggle('cap', id === captain());
+      el.setAttribute('aria-label', `${name(id)}, numero ${n}, ${ROLE_NAMES[roleOf(i)]}${id === captain() ? ', capitano' : ''}`);
       requestAnimationFrame(() => el.classList.remove('gone'));
     });
     renderBoard(true);
-    if (!lineup.includes(state.selected)) state.selected = lineup[0];
+    if (!lineup.includes(state.selected)) state.selected = captain();
     select(state.selected);
     fillPlayerSelect();
     if (state.view === 'carta') void renderCarta(false);
   }
 
-  // ---------- Tabellone delle sostituzioni ----------
-  function subs() {
-    const next = NEXT[state.period];
-    if (!next) return [];
-    const now = m.lineups[state.period], before = m.lineups[next];
-    const out = before.filter((id) => !now.includes(id));
-    const inn = now.filter((id) => !before.includes(id));
-    return inn.map((id, i) => ({ in: id, inNum: now.indexOf(id) + 1, out: out[i] as string | undefined, outNum: out[i] ? before.indexOf(out[i]) + 1 : null }));
-  }
-
+  // ---------- Tabellone sotto il campo (sostituzioni o schermate della squadra) ----------
   function renderBoard(reset: boolean) {
-    const list = subs();
+    const b = sq.board(state.period);
     if (reset) state.subIdx = 0;
     const rows = $('rows');
-    if (!list.length) {
-      $('boardTitle').textContent = state.period === 'long' ? 'Formazione storica' : 'Sostituzioni';
+    $('boardTitle').textContent = b.title;
+    if (!b.slides.length) {
       $('boardCount').textContent = '';
-      rows.innerHTML = state.period === 'long'
-        ? `<div class="none">NESSUN CAMBIO<br>SQUADRA DELL'ANNO</div>`
-        : `<div class="none">STESSA SQUADRA<br>DEL PERIODO PRIMA</div>`;
+      rows.innerHTML = `<div class="none">${b.empty}</div>`;
       $<HTMLButtonElement>('btnCambio').disabled = true;
       return null;
     }
     $<HTMLButtonElement>('btnCambio').disabled = false;
-    const s = list[state.subIdx % list.length];
-    $('boardTitle').textContent = `Sostituzioni · vs ${PERIOD_LBL[NEXT[state.period]!]}`;
-    $('boardCount').textContent = `${(state.subIdx % list.length) + 1}/${list.length}`;
-    rows.innerHTML = `<div class="sub flip-in">
-      <div class="side out"><span class="arrow">▼</span><span class="n">${String(s.outNum ?? '–').padStart(2, '0')}</span><span class="who"><span>Esce</span><b>${s.out ? esc(name(s.out)) : '—'}</b></span></div>
-      <div class="side in"><span class="arrow">▲</span><span class="n">${String(s.inNum).padStart(2, '0')}</span><span class="who"><span>Entra</span><b>${esc(name(s.in))}</b></span></div>
-    </div>`;
-    return s;
+    const k = state.subIdx % b.slides.length;
+    $('boardCount').textContent = b.slides.length > 1 ? `${k + 1}/${b.slides.length}` : '';
+    rows.innerHTML = b.slides[k].html;
+    return b.slides[k];
   }
 
   async function nextSub() {
-    const list = subs();
-    if (!list.length) return;
-    state.subIdx = (state.subIdx + 1) % list.length;
-    const s = renderBoard(false)!;
+    const n = sq.board(state.period).slides.length;
+    if (!n) return;
+    state.subIdx = (state.subIdx + 1) % n;
+    const slide = renderBoard(false)!;
     sfx.beep();
+    const s = slide.sub;
+    if (!s) return;
     const el = els.get(s.in);
     if (!el || reduce) return;
     // Il fantasma di chi esce scivola fuori dalla linea laterale, chi entra si accende di verde.
@@ -139,7 +128,7 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
     g.className = 'pl-ghost';
     g.setAttribute('style', s.out ? discStyle(s.out) : 'background:#333');
     g.style.left = el.style.left; g.style.top = el.style.top;
-    if (s.out && !m.players.get(s.out)?.thumb) g.textContent = initials(name(s.out));
+    if (s.out && !sq.players.get(s.out)?.thumb) g.textContent = initials(name(s.out));
     pitch.appendChild(g);
     el.classList.add('entering');
     el.animate([{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: .7 }, { transform: 'scale(1)' }], { duration: 700, easing: 'ease-out' });
@@ -154,15 +143,12 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
   function select(id: string) {
     state.selected = id;
     for (const [k, el] of els) el.classList.toggle('selected', k === id);
-    const i = m.lineups[state.period].indexOf(id);
-    const inP = PERIODS.map((p) => `<span class="${m.lineups[p].includes(id) ? 'yes' : ''}">${PERIOD_LBL[p]}${m.lineups[p].includes(id) ? ' ✓' : ''}</span>`).join('');
-    const sinceAll = PERIODS.every((p) => m.lineups[p].includes(id));
-    const p = m.players.get(id)!;
+    const i = lineupNow().indexOf(id);
+    const p = sq.players.get(id)!;
     $('scheda').innerHTML = `<div class="big" style='${discStyle(id)}'>${p.thumb ? '' : esc(initials(p.name))}</div>
       <h3>${esc(p.name)}</h3>
-      <div class="meta">N. ${i + 1} · ${ROLE_NAMES[roleOf(i)]}${i === 0 ? ' · Capitano' : ''}${sinceAll ? ' · Bandiera' : ''}</div>
-      <div class="periods">${inP}</div>
-      <div class="meta">In campo per i tuoi ascolti delle ultime ${PERIOD_LBL[state.period]}.</div>`;
+      <div class="meta">N. ${sq.shirt(id, state.period)} · ${ROLE_NAMES[roleOf(i)]}${id === captain() ? ' · Capitano' : ''}</div>
+      ${sq.scheda(id, state.period)}`;
   }
 
   // ---------- Azione: passaggi fino al gol del capitano ----------
@@ -192,20 +178,24 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
 
   function touch(el: HTMLElement) { el.classList.remove('touch'); void el.offsetWidth; el.classList.add('touch'); }
   const pickRole = (k: number) => {
-    const idx = m.lineups[state.period].map((_, i) => i).filter((i) => roleOf(i) === k);
+    const idx = lineupNow().map((_, i) => i).filter((i) => roleOf(i) === k);
     return idx[Math.floor(Math.random() * idx.length)];
   };
 
   async function azione() {
     if (state.busy || state.view === 'carta') return;
     state.busy = true; $<HTMLButtonElement>('btnAzione').disabled = true;
-    const lineup = m.lineups[state.period];
+    const lineup = lineupNow();
+    const cap = Math.max(0, lineup.indexOf(captain()));
     // Portiere → difensore → centrocampista → (altro centrocampista) → attaccante → capitano, che tira.
     const chain = [10, pickRole(2), pickRole(1)];
     if (Math.random() > .4) { const x = pickRole(1); if (x !== chain.at(-1)) chain.push(x); }
     const wing = pickRole(0);
-    if (wing !== 0) chain.push(wing);
-    chain.push(0);
+    if (wing !== cap) chain.push(wing);
+    // Se il capitano è già nella catena (difensore, centrocampista) la catena si ferma a lui.
+    const at = chain.indexOf(cap);
+    if (at > 0) chain.length = at;
+    if (chain.at(-1) !== cap) chain.push(cap);
     const first = els.get(lineup[chain[0]])!;
     ball.classList.add('on');
     sfx.whistle(.22);
@@ -220,22 +210,26 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
       state.minute = Math.min(90, state.minute + Math.ceil(Math.random() * 3));
       $('clock').textContent = String(state.minute).padStart(2, '0') + "'";
       await kick(p, q, reduce ? 1 : 560 + Math.random() * 200, Math.hypot(q[0] - p[0], q[1] - p[1]) > 140 ? 34 : 14);
+      if (!card.isConnected) return;
       touch(nxt);
       sfx.swell(k / chain.length);
       p = q;
       await sleep(reduce ? 0 : 160);
     }
     const goalPt: [number, number] = [pitch.clientWidth / 2 + (Math.random() * 30 - 15), 4];
-    say(`${name(lineup[0])} calcia…`);
+    const scorer = lineup[cap];
+    say(`${name(scorer)} calcia…`);
     await kick(p, goalPt, reduce ? 1 : 380, 4);
+    if (!card.isConnected) return;
     const goal = $('goal'); goal.classList.remove('ripple'); void goal.offsetWidth; goal.classList.add('ripple');
     state.home++;
     sfx.goal();
     const s = $('sHome'); s.textContent = String(state.home); s.classList.add('bump'); setTimeout(() => s.classList.remove('bump'), 500);
-    $('scorer').textContent = name(lineup[0]);
+    $('scorer').textContent = name(scorer);
     const f = $('flash'); f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
-    say(`GOL di ${name(lineup[0])}! ${team()} ${state.home}, Noia ${state.away}.`);
+    say(`GOL di ${name(scorer)}! ${team()} ${state.home}, ${sq.opponent} ${state.away}.`);
     await sleep(reduce ? 0 : 1300);
+    if (!card.isConnected) return;
     ball.classList.remove('on');
     if (state.minute >= 90) { state.minute = 0; state.home = 0; $('sHome').textContent = '0'; }
     state.busy = false; $<HTMLButtonElement>('btnAzione').disabled = (state.view as View) === 'carta';
@@ -243,28 +237,31 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
 
   // ---------- Carta del giocatore ----------
   function fillPlayerSelect() {
-    const lineup = m.lineups[state.period];
-    if (!lineup.includes(state.ccId)) state.ccId = lineup[0];
-    $('ccPlayer').innerHTML = lineup.map((id, i) =>
-      `<option value="${id}" ${id === state.ccId ? 'selected' : ''}>${i + 1}. ${esc(name(id))}${i === 0 ? ' (capitano)' : ''}</option>`).join('');
+    const lineup = lineupNow();
+    if (!lineup.includes(state.ccId)) state.ccId = captain();
+    // Il capitano per primo, poi in ordine di posizione.
+    const order = [captain(), ...lineup.filter((id) => id !== captain())];
+    $('ccPlayer').innerHTML = order.map((id) =>
+      `<option value="${id}" ${id === state.ccId ? 'selected' : ''}>${sq.shirt(id, state.period)}. ${esc(name(id))}${id === captain() ? ' (capitano)' : ''}</option>`).join('');
   }
 
   let revealRun = 0;
   async function renderCarta(animate: boolean) {
     const run = ++revealRun;
-    const id = state.ccId || m.lineups[state.period][0];
-    const i = m.lineups[state.period].indexOf(id);
-    const p = m.players.get(id)!;
+    const id = state.ccId || captain();
+    const i = lineupNow().indexOf(id);
+    const isCap = id === captain();
+    const p = sq.players.get(id)!;
     const shell = $('ccShell');
     if (animate && !reduce) hideParts();
-    const disc = await discography(api, id);
+    const data = await sq.card(id, state.period);
     if (run !== revealRun) return;
-    const { st, raw, ovr } = cardStats(m, id, state.period, disc);
+    const { st, raw, ovr } = data;
     const tier = ovr >= 85 ? 'oro' : ovr >= 72 ? 'argento' : 'bronzo';
     shell.className = `cc-shell ${tier}`;
     $('ccOvr').textContent = String(ovr);
     $('ccPos').textContent = ROLE_SHORT[roleOf(i)];
-    $('ccNum').textContent = '#' + (i + 1);
+    $('ccNum').textContent = '#' + sq.shirt(id, state.period);
     const face = $('ccFace');
     face.style.backgroundImage = p.photo ? `url("${p.photo}")` : grad(id);
     face.classList.toggle('nophoto', !p.photo);
@@ -274,17 +271,13 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
     back.classList.toggle('photo', !!p.photo);
     back.style.background = p.photo ? `center / cover no-repeat url("${p.photo}")` : backdrop(id);
     $('ccName').textContent = p.name;
-    $('ccTier').textContent = `${tier}${i === 0 ? ' · capitano' : ''} · ${PERIOD_LBL[state.period]}`;
+    $('ccTier').textContent = [tier, isCap ? 'capitano' : '', data.tierNote].filter(Boolean).join(' · ');
     $('ccStats').innerHTML = Object.entries(st).map(([k, v]) => `<div data-v="${v ?? ''}"><b>${v ?? '–'}</b><span>${k}</span></div>`).join('');
     $('ccHow').innerHTML = (Object.keys(raw) as (keyof typeof raw)[]).map((k) =>
       `<li><b>${k} ${st[k] ?? '–'}</b> ${esc(raw[k])}</li>`).join('');
     $('ccHowName').textContent = p.name;
-    const present = PERIODS.filter((x) => m.lineups[x].includes(id)).length;
-    const song = m.song.get(id);
-    $('ccGen').innerHTML = `<dt>Esordio</dt><dd>${disc.debut ?? '—'}</dd>`
-      + `<dt>Brano simbolo</dt><dd>${song ? `«${esc(song)}»` : '—'}</dd>`
-      + `<dt>In squadra</dt><dd>${present} ${present === 1 ? 'periodo' : 'periodi'} su 3</dd>`;
-    $('ccCap').innerHTML = `${esc(i === 0 ? `Il capitano di ${team()}` : `In campo per ${team()}`)}<small>Ascolti: ${PERIOD_FULL[state.period].toLowerCase()}</small>`;
+    $('ccGen').innerHTML = data.gen.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('');
+    $('ccCap').innerHTML = `${esc(isCap ? `Il capitano di ${team()}` : `In campo per ${team()}`)}<small>${esc(data.captionNote)}</small>`;
     $('ccBeams').className = `cc-beams ${tier}`;
     if (animate && !reduce) void playReveal(run, ovr, tier);
     else showParts();
@@ -379,7 +372,7 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
       tilt.style.setProperty('--mx', (-p * .6).toFixed(3));
       tilt.style.setProperty('--my', (p * .2).toFixed(3));
     }
-    requestAnimationFrame(idle);
+    if (card.isConnected) requestAnimationFrame(idle);
   })(performance.now());
 
   // ---------- Controlli ----------
@@ -390,7 +383,7 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
       onPick(b.dataset.v!, b);
     });
   }
-  seg('segPeriodo', (v) => { if (state.busy) return; state.period = v as Period; layout(); say(`Formazione delle ultime ${PERIOD_LBL[state.period]}.`); });
+  seg('segPeriodo', (v) => { if (state.busy) return; state.period = v as Period; layout(); say(`Formazione: ${sq.chip(state.period).toLowerCase()}.`); });
   seg('segModulo', (v, b) => { if (state.busy) return; state.modulo = v as Modulo; layout(); say(`Il mister passa al ${b.textContent}.`); });
   seg('segStile', (v) => { card.dataset.style = v; sfx.beep(); });
   seg('segFormato', (v) => {
@@ -422,7 +415,8 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
   let tick = 0;
   const auto = $<HTMLInputElement>('auto');
   auto.checked = !reduce;
-  setInterval(() => {
+  const timer = setInterval(() => {
+    if (!card.isConnected) { clearInterval(timer); return; }
     if (!auto.checked || document.hidden || state.view === 'carta' || card.classList.contains('exporting')) return;
     tick++;
     if (tick % 3 === 0) void nextSub();
@@ -431,6 +425,10 @@ export function mountFormazione(card: HTMLElement, root: HTMLElement, m: Model, 
   if (!reduce) setTimeout(() => void azione(), 900);
 
   return {
+    /** Ridisegna la carta (es. dopo che il mister cambia un voto). */
+    refreshCard: () => { if (state.view === 'carta') void renderCarta(false); },
+    cardPlayer: () => state.ccId || captain(),
+    team,
     filename: () => state.view === 'carta' ? `carta-${name(state.ccId).toLowerCase().replace(/\W+/g, '-')}` : 'la-mia-formazione',
     shareText: () => state.view === 'carta'
       ? `${name(state.ccId)} è il capitano di ${team()} 🏆`

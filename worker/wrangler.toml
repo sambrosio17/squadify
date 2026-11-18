@@ -1,0 +1,11 @@
+# Squadify API: proxy del catalogo Spotify (vedi README.md in questa cartella).
+name = "squadify-api"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET si impostano come secret, non qui:
+#   npx wrangler secret put SPOTIFY_CLIENT_ID
+#   npx wrangler secret put SPOTIFY_CLIENT_SECRET
+[vars]
+# Chi può chiamare il Worker dal browser.
+ALLOWED_ORIGINS = "https://sambrosio17.github.io,http://127.0.0.1:5172"

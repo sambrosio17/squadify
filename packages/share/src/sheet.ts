@@ -2,7 +2,11 @@ import { esc } from '@sportify/core';
 import { downloadBlob } from './card';
 import { shareLink } from './credit';
 
-export interface SheetOpts { blob: Blob; filename: string; title: string; text: string }
+export interface SheetOpts {
+  blob: Blob; filename: string; title: string; text: string;
+  /** Link da copiare; di default l'indirizzo dell'app. */
+  link?: string;
+}
 
 const ICON_SHARE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>';
 const ICON_SAVE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
@@ -18,7 +22,8 @@ export function openShareSheet(o: SheetOpts) {
   const file = new File([o.blob], `${o.filename}.png`, { type: 'image/png' });
   const canShare = !!navigator.canShare?.({ files: [file] });
   const url = URL.createObjectURL(o.blob);
-  const link = shareLink();
+  const link = o.link ?? shareLink();
+  const linkLbl = o.link ? 'Copia link della sfida' : 'Copia link';
   const prev = document.activeElement as HTMLElement | null;
 
   const wrap = document.createElement('div');
@@ -39,7 +44,7 @@ export function openShareSheet(o: SheetOpts) {
         ${canShare ? `<button type="button" class="btn share-sheet-main" data-a="share">${ICON_SHARE}Condividi</button>` : ''}
         <div class="share-sheet-row">
           <button type="button" class="btn ghost" data-a="save">${ICON_SAVE}Salva immagine</button>
-          <button type="button" class="btn ghost" data-a="link">${ICON_LINK}<span>Copia link</span></button>
+          <button type="button" class="btn ghost" data-a="link">${ICON_LINK}<span>${linkLbl}</span></button>
         </div>
       </div>
     </section>`;
@@ -75,6 +80,6 @@ export function openShareSheet(o: SheetOpts) {
     } catch {
       lbl.textContent = link.replace(/^https?:\/\//, '');
     }
-    setTimeout(() => { lbl.textContent = 'Copia link'; }, 2500);
+    setTimeout(() => { lbl.textContent = linkLbl; }, 2500);
   });
 }

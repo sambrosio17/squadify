@@ -17,7 +17,17 @@ const ICON = {
   info: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
 };
 
-export function mountMobile(card: HTMLElement, root: HTMLElement) {
+export interface MobileOpts {
+  /** Mostra la scelta del periodo sopra la card (solo con gli ascolti). */
+  periods?: boolean;
+  /** Squadra fatta a mano: al posto del modulo, un pulsante che torna al mercato. */
+  onEdit?: () => void;
+  /** Testo del pulsante in fondo al pannello (di default "Esci da Spotify"). */
+  exitLabel?: string;
+}
+
+export function mountMobile(card: HTMLElement, root: HTMLElement, opts: MobileOpts = {}) {
+  const periods = opts.periods ?? true;
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
   const mq = matchMedia(MOBILE);
   root.classList.add('lf-m');
@@ -47,6 +57,7 @@ export function mountMobile(card: HTMLElement, root: HTMLElement) {
     period.appendChild(c);
   }
   fit.before(period);
+  period.hidden = !periods;
 
   // ---- Galleria dei giocatori sotto la carta del capitano.
   const picker = document.createElement('div');
@@ -71,7 +82,7 @@ export function mountMobile(card: HTMLElement, root: HTMLElement) {
   sheetHead.innerHTML = `<i aria-hidden="true"></i><h2>Personalizza</h2><button type="button" class="m-done" id="mDone">Fatto</button>`;
   aside.prepend(sheetHead);
   const logout = document.createElement('button');
-  logout.type = 'button'; logout.className = 'btn ghost m-logout'; logout.textContent = 'Esci da Spotify';
+  logout.type = 'button'; logout.className = 'btn ghost m-logout'; logout.textContent = opts.exitLabel ?? 'Esci da Spotify';
   logout.addEventListener('click', () => $<HTMLButtonElement>('#logout').click());
   aside.appendChild(logout);
   aside.setAttribute('aria-label', 'Personalizza la storia');
@@ -98,6 +109,7 @@ export function mountMobile(card: HTMLElement, root: HTMLElement) {
   $('#mSound').addEventListener('click', () => $<HTMLButtonElement>('#btnSound').click());
   $('#mShare').addEventListener('click', () => $<HTMLButtonElement>('#share').click());
   $('#mModulo').addEventListener('click', () => {
+    if (opts.onEdit) { opts.onEdit(); return; }
     const bs = [...root.querySelectorAll<HTMLButtonElement>('#segModulo button')];
     const i = bs.findIndex((b) => b.getAttribute('aria-pressed') === 'true');
     bs[(i + 1) % bs.length].click();
@@ -109,6 +121,7 @@ export function mountMobile(card: HTMLElement, root: HTMLElement) {
   // ---- Allinea i controlli nuovi allo stato della regia.
   const select = $<HTMLSelectElement>('#ccPlayer');
   function renderPicker() {
+    if (!card.isConnected) return;
     const row = $('#mPickRow');
     row.innerHTML = '';
     for (const o of select.options) {
@@ -131,14 +144,21 @@ export function mountMobile(card: HTMLElement, root: HTMLElement) {
     }
   }
   function sync() {
+    // La partita può essere già stata tolta dalla pagina (si torna al mercato): i listener su root restano.
+    if (!card.isConnected) return;
     for (const b of root.querySelectorAll<HTMLElement>('#mPickRow button')) b.setAttribute('aria-pressed', String(b.dataset.id === select.value));
     for (const c of period.querySelectorAll('button')) {
       const b = root.querySelector(`#segPeriodo button[data-v="${c.dataset.v}"]`);
       c.setAttribute('aria-pressed', b?.getAttribute('aria-pressed') ?? 'false');
     }
     const mod = root.querySelector('#segModulo button[aria-pressed="true"]');
-    $('#mModulo span').textContent = mod?.textContent ?? 'Modulo';
-    $('#mModulo').setAttribute('aria-label', `Modulo ${mod?.textContent ?? ''}, tocca per cambiarlo`);
+    if (opts.onEdit) {
+      $('#mModulo').innerHTML = `${ICON.edit}<span>Squadra</span>`;
+      $('#mModulo').setAttribute('aria-label', 'Modifica la squadra');
+    } else {
+      $('#mModulo span').textContent = mod?.textContent ?? 'Modulo';
+      $('#mModulo').setAttribute('aria-label', `Modulo ${mod?.textContent ?? ''}, tocca per cambiarlo`);
+    }
     const carta = card.dataset.view === 'carta';
     $('#mView').innerHTML = carta ? `${ICON.campo}<span>Partita</span>` : `${ICON.carta}<span>Carta</span>`;
     $('#mShare span').textContent = carta ? 'Condividi la carta' : 'Condividi';
@@ -157,11 +177,12 @@ export function mountMobile(card: HTMLElement, root: HTMLElement) {
 
   // ---- Scala della card in base allo spazio libero.
   function resize() {
+    if (!card.isConnected) return;
     if (!mq.matches) {
       fit.style.cssText = ''; scale.style.cssText = '';
       return;
     }
-    const used = top.offsetHeight + period.offsetHeight + bar.offsetHeight
+    const used = top.offsetHeight + (periods ? period.offsetHeight : 0) + bar.offsetHeight
       + (root.classList.contains('m-carta') ? picker.offsetHeight : 0) + 28;
     const k = Math.min(1, (innerWidth - 24) / 360, (innerHeight - used) / 640);
     fit.style.cssText = `width:${Math.round(360 * k)}px;height:${Math.round(640 * k)}px`;
