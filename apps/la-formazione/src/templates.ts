@@ -4,7 +4,7 @@ export const CARD_HTML = `
       <span class="live">Live</span>
       <span class="team" id="teamLbl">La mia squadra</span>
       <span class="score"><b id="sHome">0</b>–<b id="sAway">0</b></span>
-      <span class="opp">Noia</span>
+      <span class="opp" id="sAwayName">Noia</span>
       <span class="clock" id="clock">00'</span>
     </div>
     <div class="period-chip" id="periodChip"></div>
@@ -42,7 +42,7 @@ export const CARD_HTML = `
 `;
 
 export const CONTROLS_HTML = `<div class="regia">
-    <div class="group">
+    <div class="group" id="grpPeriodo">
       <span class="lbl" id="lblPeriodo">Periodo</span>
       <div class="seg" role="group" aria-labelledby="lblPeriodo" id="segPeriodo">
         <button id="p-short" data-v="short" aria-pressed="true">4 settimane</button>
@@ -50,7 +50,7 @@ export const CONTROLS_HTML = `<div class="regia">
         <button id="p-long" data-v="long" aria-pressed="false">1 anno</button>
       </div>
     </div>
-    <div class="group">
+    <div class="group" id="grpModulo">
       <span class="lbl" id="lblModulo">Modulo</span>
       <div class="seg" role="group" aria-labelledby="lblModulo" id="segModulo">
         <button id="m-433" data-v="433" aria-pressed="true">4-3-3</button>
@@ -79,10 +79,10 @@ export const CONTROLS_HTML = `<div class="regia">
       <label for="ccPlayer">Giocatore della carta</label>
       <select id="ccPlayer"></select>
       <button class="btn alt" id="btnReplay" style="align-self:flex-start">Rigioca l'apertura</button>
+      <div class="voti" id="ccVoti" hidden></div>
       <div class="howto"><b>DA DOVE VENGONO I NUMERI DI <span id="ccHowName"></span></b>
         <ul id="ccHow"></ul>
-        FED, RIP, LIB e HIT sono relativi alla tua squadra del periodo: il titolare con il valore più alto prende 99, chi ha zero prende 40.
-        DIS e CAR vengono dalla discografia (<code>/artists/{id}/albums</code>); se Spotify non la fornisce compare un trattino e non contano nella valutazione.
+        <span id="ccHowNote"></span>
       </div>
     </div>
     <div class="group">
@@ -98,5 +98,5 @@ export const CONTROLS_HTML = `<div class="regia">
       <span class="lbl">Scheda giocatore</span>
       <div class="scheda" id="scheda"></div>
     </div>
-    <p class="note">Tocca un giocatore per la sua scheda. Il numero di maglia è la posizione nella classifica degli artisti più ascoltati del periodo. Il capitano (C) è il numero 1 e segna sempre lui.</p>
+    <p class="note" id="regiaNote"></p>
 </div>`;

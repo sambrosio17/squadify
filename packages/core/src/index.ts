@@ -3,6 +3,7 @@ import { createClient } from './client';
 import { endpoints } from './endpoints';
 
 export * from './auth';
+export * from './catalog';
 export * from './client';
 export * from './endpoints';
 export * from './types';

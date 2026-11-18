@@ -17,6 +17,8 @@ export interface CardResult {
   getFilename?: () => string;
   /** HTML dei controlli mostrati accanto alla card (facoltativo). */
   controls?: string;
+  /** Link da copiare nel pannello di condivisione al posto dell'indirizzo dell'app (es. la sfida). */
+  link?: () => string | undefined;
   /** Chiamata dopo che card e controlli sono nella pagina: qui l'app aggancia animazioni ed eventi. */
   mount?: (card: HTMLElement, root: HTMLElement) => void;
 }
@@ -40,7 +42,6 @@ export async function startApp(def: AppDefinition) {
   const root = document.querySelector<HTMLElement>('#app')!;
   root.className = 'shell';
   const header = `<h1>${esc(def.title)}</h1><p class="tagline">${esc(def.tagline)}</p>`;
-  const cta = def.cta ?? 'Crea anche la tua';
   const footer = `<footer class="made-by">${creditLink('made-by-link')}</footer>`;
 
   try {
@@ -53,35 +54,7 @@ export async function startApp(def: AppDefinition) {
     }
     root.innerHTML = `${header}<p class="status">Sto ascoltando i tuoi ascolti…</p>${footer}`;
     const card = await def.build(spotify.api);
-    const actions = `<div class="actions">
-        <button class="btn" id="share">Condividi</button>
-        <button class="btn ghost" id="logout">Esci</button>
-      </div>`;
-    const cardHtml = `<div class="story-card ${card.className ?? ''}" id="card">${card.html}${ctaStrip(cta)}</div>`;
-    root.innerHTML = card.controls
-      ? `${header}<div class="stage"><div class="stage-card">${cardHtml}${actions}</div><aside class="stage-controls">${card.controls}</aside></div>${footer}`
-      : `${header}${cardHtml}${actions}${footer}`;
-    const el = root.querySelector<HTMLElement>('#card')!;
-    const share = root.querySelector<HTMLButtonElement>('#share')!;
-    share.addEventListener('click', async () => {
-      share.disabled = true;
-      // Durante l'export le animazioni si fermano, così il PNG mostra lo stato finale.
-      el.classList.add('exporting');
-      try {
-        const text = typeof card.shareText === 'function' ? card.shareText() : card.shareText;
-        const blob = await renderCard(el);
-        openShareSheet({ blob, filename: card.getFilename?.() ?? card.filename, title: def.title, text: withCredit(cta, text) });
-      } catch (e) {
-        console.error(e);
-        share.textContent = 'Errore, riprova';
-        setTimeout(() => { share.textContent = 'Condividi'; }, 2500);
-      } finally {
-        el.classList.remove('exporting');
-        share.disabled = false;
-      }
-    });
-    root.querySelector('#logout')!.addEventListener('click', () => spotify.logout());
-    card.mount?.(el, root);
+    renderStage(root, def, card, { label: 'Esci', onClick: () => spotify.logout() });
   } catch (e) {
     const msg = e instanceof SpotifyError && e.status === 403
       ? 'Il tuo account non è tra i 5 utenti abilitati per questa app (Development Mode).'
@@ -91,4 +64,52 @@ export async function startApp(def: AppDefinition) {
     root.innerHTML = `${header}<p class="status error">${esc(msg)}</p>${footer}`;
     console.error(e);
   }
+}
+
+export interface StageExit {
+  /** Testo del pulsante secondario accanto a "Condividi" (es. "Esci", "Modifica squadra"). */
+  label: string;
+  onClick: () => void;
+}
+
+/**
+ * Card, controlli e pulsante "Condividi" nella pagina: è la parte di `startApp` dopo il login,
+ * usabile anche dalle app che non chiedono l'accesso a Spotify.
+ * Il pulsante secondario ha id "logout" (lo usa anche l'interfaccia per telefono).
+ */
+export function renderStage(root: HTMLElement, def: Pick<AppDefinition, 'title' | 'tagline' | 'cta'>, card: CardResult, exit: StageExit) {
+  const header = `<h1>${esc(def.title)}</h1><p class="tagline">${esc(def.tagline)}</p>`;
+  const footer = `<footer class="made-by">${creditLink('made-by-link')}</footer>`;
+  const cta = def.cta ?? 'Crea anche la tua';
+  root.className = 'shell';
+  const actions = `<div class="actions">
+      <button class="btn" id="share">Condividi</button>
+      <button class="btn ghost" id="logout">${esc(exit.label)}</button>
+    </div>`;
+  const cardHtml = `<div class="story-card ${card.className ?? ''}" id="card">${card.html}${ctaStrip(cta)}</div>`;
+  root.innerHTML = card.controls
+    ? `${header}<div class="stage"><div class="stage-card">${cardHtml}${actions}</div><aside class="stage-controls">${card.controls}</aside></div>${footer}`
+    : `${header}${cardHtml}${actions}${footer}`;
+  const el = root.querySelector<HTMLElement>('#card')!;
+  const share = root.querySelector<HTMLButtonElement>('#share')!;
+  share.addEventListener('click', async () => {
+    share.disabled = true;
+    // Durante l'export le animazioni si fermano, così il PNG mostra lo stato finale.
+    el.classList.add('exporting');
+    try {
+      const text = typeof card.shareText === 'function' ? card.shareText() : card.shareText;
+      const blob = await renderCard(el);
+      openShareSheet({ blob, filename: card.getFilename?.() ?? card.filename, title: def.title, text: withCredit(cta, text), link: card.link?.() });
+    } catch (e) {
+      console.error(e);
+      share.textContent = 'Errore, riprova';
+      setTimeout(() => { share.textContent = 'Condividi'; }, 2500);
+    } finally {
+      el.classList.remove('exporting');
+      share.disabled = false;
+    }
+  });
+  root.querySelector('#logout')!.addEventListener('click', exit.onClick);
+  card.mount?.(el, root);
+  return el;
 }
